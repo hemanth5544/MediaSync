@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {ChatMessage, RTCPeerConnectionsMap } from '../types';
-
+const apiUrl = import.meta.env.VITE_APP_URL; 
 const configuration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -18,7 +18,7 @@ export const useWebRTCCall = (callId: string) => {
 
   // Initial setup effect
   useEffect(() => {
-    const newSocket = io("http://localhost:2000", {
+    const newSocket = io(`${apiUrl}`, {
       transports: ['websocket'],
       upgrade: false
     });
