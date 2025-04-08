@@ -9,7 +9,10 @@ const configuration = {
   ]
 };
 
-export const useWebRTCCall = (callId: string) => {
+export const useWebRTCCall = (
+  callId: string,
+  onParticipantJoined?: (socketId: string) => void
+) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<{ [key: string]: MediaStream }>({});
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -68,6 +71,10 @@ export const useWebRTCCall = (callId: string) => {
           ...prev,
           [socketId]: event.streams[0]
         }));
+        // Trigger notification when a new participant fully connects with a stream
+        if (onParticipantJoined) {
+          onParticipantJoined(socketId);
+        }
       };
 
       // Create and send offer
@@ -109,6 +116,9 @@ export const useWebRTCCall = (callId: string) => {
           ...prev,
           [data.from]: event.streams[0]
         }));
+        if (onParticipantJoined) {
+          onParticipantJoined(data.from);
+        }
       };
 
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
@@ -152,7 +162,7 @@ export const useWebRTCCall = (callId: string) => {
       socket.off("receive-personal-message");
 
     };
-  }, [socket, localStream, peerConnections]);
+  }, [socket, localStream, peerConnections, onParticipantJoined]);
 
-  return { localStream, remoteStreams,socket,messages};
+  return { localStream, remoteStreams, socket, messages };
 };

@@ -53,7 +53,6 @@ io.on("connection", async (socket) => {
 
     //One-One chat
     socket.on("personal-chat", (data) => {
-        console.log(data,"lllllllllllllllll")
         io.to(data.to).emit("receive-personal-message", { "message": data.message, "from": socket.id });
     });
     
