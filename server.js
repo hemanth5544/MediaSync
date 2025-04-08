@@ -1,9 +1,11 @@
-const express = require('express');
+import express from 'express';
+import http from 'http';
+import { v4 as uuid4 } from 'uuid';
+import { Server } from 'socket.io';
+
 const app = express();
-const http = require('http');
-const path = require("path");
-const { v4: uuid4 } = require("uuid");
-const { Server } = require("socket.io");
+
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -44,10 +46,17 @@ io.on("connection", async (socket) => {
         io.to(stream_id).emit("viewers-count", viewersCount.length);
     });
 
-    // Chat
+    // StreamChat
     socket.on("chat-message", data => {
         io.to(data.to).emit("brodcast-message", { "message": data.message, "from": socket.id });
     });
+
+    //One-One chat
+    socket.on("personal-chat", (data) => {
+        console.log(data,"lllllllllllllllll")
+        io.to(data.to).emit("receive-personal-message", { "message": data.message, "from": socket.id });
+    });
+    
 });
 
 app.get("/",(req,res) => {
