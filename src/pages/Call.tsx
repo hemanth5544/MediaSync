@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { VideoPlayer } from '../components/Players/VideoPlayer';
-import { ShareLink } from '../components/ShareLink';
 import { useWebRTCCall } from '../hooks/useWebRTCCall';
 import { PersonalChat } from '../components/ChatCompnents/PersonalChat';
 import { toast } from 'sonner';
@@ -35,11 +34,7 @@ export const Call = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-white p-6">
-      <div className="mb-6">
-        <ShareLink 
-          url={window.location.href} 
-        />
-      </div>
+ 
     
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {localStream && (
