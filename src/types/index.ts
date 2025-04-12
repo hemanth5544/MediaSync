@@ -1,5 +1,5 @@
 export interface RTCPeerConnectionsMap {
-  [key: string]: RTCPeerConnection;
+  [socketId: string]: RTCPeerConnection;
 }
 
 export interface ChatMessage {
