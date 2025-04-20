@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import http from 'http';
 import { v4 as uuid4 } from 'uuid';
@@ -33,6 +34,15 @@ io.on("connection", async (socket) => {
         socket.to(data.to).emit("recive-icecandidate", { "from": socket.id, "candidate": data.candidate });
     });
 
+      // Screen sharing events
+    socket.on('start-screen-share', (call_id) => {
+        socket.to(call_id).emit('start-screen-share', socket.id);
+    });
+
+    socket.on('stop-screen-share', (call_id) => {
+        socket.to(call_id).emit('stop-screen-share', socket.id);
+    });
+    
     // Streaming
     socket.on("create-stream", stream_id => {
         socket.join(stream_id);
