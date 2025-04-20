@@ -1,7 +1,7 @@
 
 import { useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Progress } from './ui/progress'
+import { Progress } from '../ui/progress'
 
 export const RouterProgress = () => {
     const [progress, setProgress] = useState(0)
