@@ -53,7 +53,6 @@ export const Call = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-white p-6">
       {/* Video Streams Section */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-4">Video Streams</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Local Video Stream */}
           {localStream && (
