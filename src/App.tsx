@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
-import { Home } from './pages/Home'
+import { Home } from './pages/Home/Home'
 import { Call } from './pages/Call'
 import { Stream } from './pages/Stream'
-import {RouterProgress} from './components/RouterProgress'
+import {RouterProgress} from './components/utils/RouterProgress'
 import { Toaster } from "./components/ui/sonner"
 
 
