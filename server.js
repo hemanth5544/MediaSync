@@ -15,6 +15,7 @@ const io = new Server(server, {
         methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
     }
 });
+const userMap = new Map();
 
 io.on("connection", async (socket) => {
     socket.on("join-call", call_id => {
@@ -65,6 +66,11 @@ io.on("connection", async (socket) => {
     socket.on("personal-chat", (data) => {
         io.to(data.to).emit("receive-personal-message", { "message": data.message, "from": socket.id });
     });
+
+    socket.on("set-username", (username) => {
+        console.log("Received username:", username, "for socket:", socket.id);
+        userMap.set(socket.id, username);
+      });
     
 });
 
