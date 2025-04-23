@@ -136,6 +136,7 @@ export const Call = () => {
           messages={messages}
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
+          username="Hemanth"
         />
       )}
     </div>
