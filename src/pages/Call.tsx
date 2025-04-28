@@ -6,7 +6,7 @@ import { ScreenSharePlayer } from '../components/Players/ScreenSharePlayer';
 import { useWebRTCCall } from '../hooks/useWebRTCCall';
 import { PersonalChat } from '../components/ChatCompnents/PersonalChat';
 import { toast } from 'sonner';
-import { MessageCircle, Monitor } from 'lucide-react';
+import { MessageSquare,ScreenShare} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -163,28 +163,32 @@ export const Call = () => {
 
       {/* Screen Share Button */}
       <button
-        onClick={handleScreenShare}
-        className={`fixed right-20 bottom-6 bg-gradient-to-r ${
-          screenShareStream ? 'from-[#ef4444] to-[#f87171]' : 'from-[#3b82f6] to-[#60a5fa]'
-        } text-white p-3 rounded-full hover:from-[#2563eb] hover:to-[#3b82f6] transition-all shadow-lg z-20`}
-      >
-        <Monitor size={24} />
-      </button>
+      onClick={handleScreenShare}
+      className={`fixed right-20 bottom-6 p-3 rounded-full transition-all shadow-lg z-20 border border-black ${
+        screenShareStream
+          ? 'bg-white text-red-600 hover:bg-red-600 hover:text-white'
+          : 'bg-white text-black hover:bg-black hover:text-white'
+      }`}
+    >
+      <ScreenShare size={24} />
+    </button>
+
 
       {/* Chat Toggle Button */}
       {!isChatOpen && (
-        <button
-          onClick={toggleChat}
-          className="fixed right-6 bottom-6 bg-gradient-to-r from-[#3b82f6] to-[#60a5fa] text-white p-3 rounded-full hover:from-[#2563eb] hover:to-[#3b82f6] transition-all shadow-lg z-20"
-        >
-          <div className="relative">
-            <MessageCircle size={24} />
-            {hasNewMessages && (
-              <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></span>
-            )}
-          </div>
-        </button>
-      )}
+      <button
+        onClick={toggleChat}
+        className="fixed right-6 bottom-6 bg-white text-black p-3 rounded-full hover:bg-black hover:text-white border border-black transition-all shadow-lg z-20"
+      >
+        <div className="relative">
+          <MessageSquare size={24} />
+          {hasNewMessages && (
+            <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3"></span>
+          )}
+        </div>
+      </button>
+    )}
+
 
       {socket && username && (
         <PersonalChat
