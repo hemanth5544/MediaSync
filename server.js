@@ -64,8 +64,10 @@ io.on("connection", async (socket) => {
 
     //One-One chat
     socket.on("personal-chat", (data) => {
-        io.to(data.to).emit("receive-personal-message", { "message": data.message, "from": socket.id });
-    });
+        const username = userMap.get(socket.id); // Get the username from the userMap
+        io.to(data.to).emit("receive-personal-message", { message: data.message, from: socket.id, username: username });
+      });
+      
 
     socket.on("set-username", (username) => {
         console.log("Received username:", username, "for socket:", socket.id);
