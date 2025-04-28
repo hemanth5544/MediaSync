@@ -1,4 +1,3 @@
-// src/hooks/useWebRTCCall.ts
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage, RTCPeerConnectionsMap } from '../types';
@@ -13,7 +12,8 @@ const configuration = {
 
 export const useWebRTCCall = (
   callId: string,
-  onParticipantJoined?: (socketId: string) => void
+  onParticipantJoined?: (socketId: string) => void,
+  username?: string
 ) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<{ [key: string]: MediaStream }>({});
@@ -30,6 +30,10 @@ export const useWebRTCCall = (
       upgrade: false,
     });
     setSocket(newSocket);
+
+    if (username) {
+      newSocket.emit('set-username', username);
+    }
 
     // Attempt to get user media, but proceed even if it fails
     navigator.mediaDevices
@@ -50,7 +54,7 @@ export const useWebRTCCall = (
       localStream?.getTracks().forEach((track) => track.stop());
       screenShareStream?.getTracks().forEach((track) => track.stop());
     };
-  }, [callId]);
+  }, [callId, username]);
 
   // Start screen sharing
   const startScreenShare = async () => {
@@ -61,15 +65,12 @@ export const useWebRTCCall = (
       });
       setScreenShareStream(stream);
 
-      // Notify others
       socket?.emit('start-screen-share', callId);
 
-      // Add screen share tracks to existing peer connections
       Object.entries(peerConnections).forEach(([socketId, pc]) => {
         stream.getTracks().forEach((track) => {
           const sender = pc.getSenders().find((s) => s.track?.kind === track.kind);
           if (sender) {
-            // Replace track if already sending video
             sender.replaceTrack(track);
           } else {
             pc.addTrack(track, stream);
@@ -77,7 +78,6 @@ export const useWebRTCCall = (
         });
       });
 
-      // Stop sharing when user stops it
       stream.getVideoTracks()[0].onended = () => {
         stopScreenShare();
       };
@@ -93,7 +93,6 @@ export const useWebRTCCall = (
       setScreenShareStream(null);
       socket?.emit('stop-screen-share', callId);
 
-      // Restore camera tracks if available
       if (localStream) {
         Object.entries(peerConnections).forEach(([socketId, pc]) => {
           localStream.getTracks().forEach((track) => {
@@ -107,7 +106,6 @@ export const useWebRTCCall = (
         });
       }
 
-      // Re-negotiate peer connections
       Object.entries(peerConnections).forEach(([socketId, pc]) => {
         pc.createOffer()
           .then((offer) => pc.setLocalDescription(offer))
@@ -128,14 +126,12 @@ export const useWebRTCCall = (
     socket.on('new-socket', (socketId: string) => {
       const pc = new RTCPeerConnection(configuration);
 
-      // Add local video/audio tracks if available
       if (localStream) {
         localStream.getTracks().forEach((track) => {
           pc.addTrack(track, localStream);
         });
       }
 
-      // Add screen share tracks if active
       if (screenShareStream) {
         screenShareStream.getTracks().forEach((track) => {
           pc.addTrack(track, screenShareStream);

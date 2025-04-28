@@ -22,21 +22,18 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Scroll to the latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Focus input when chat opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isOpen]);
 
-  // Handle sending a message
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
@@ -45,9 +42,10 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
     }
   };
 
-  // Render individual chat message
   const ChatMessageItem = ({ message, isOwnMessage, showAvatar }: { message: ChatMessage; isOwnMessage: boolean; showAvatar: boolean }) => {
-    const displayName = isOwnMessage ? username : message.from;
+    const displayName = isOwnMessage
+    ? username 
+    : (message.username || `User-${message.from.slice(0, 4)}`); // Now we use message.username instead of message.from
     const fallbackInitials = displayName.slice(0, 2).toUpperCase();
 
     return (
@@ -82,7 +80,6 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
     );
   };
 
-  // Determine when to show avatars (hide for consecutive messages from the same user)
   const renderMessages = () => {
     return messages.map((msg, index) => {
       const isOwnMessage = msg.from === socket.id;

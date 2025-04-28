@@ -7,10 +7,16 @@ import { useWebRTCCall } from '../hooks/useWebRTCCall';
 import { PersonalChat } from '../components/ChatCompnents/PersonalChat';
 import { toast } from 'sonner';
 import { MessageCircle, Monitor } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
 
 export const Call = () => {
   const { callId } = useParams<{ callId: string }>();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [username, setUsername] = useState('');
+  const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(true);
+  const [tempUsername, setTempUsername] = useState('');
 
   const {
     localStream,
@@ -21,19 +27,7 @@ export const Call = () => {
     messages,
     startScreenShare,
     stopScreenShare,
-  } = useWebRTCCall(callId!, (participantId: string) => {
-    toast.success(`Participant ${participantId} joined the call!`, {
-      description: `${new Date().toLocaleTimeString()} - New participant connected`,
-      duration: 5000,
-      style: {
-        background: 'rgba(33, 33, 33, 0.95)',
-        color: 'rgba(255, 255, 255, 0.9)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(4px)',
-      },
-      position: 'top-right',
-    });
-  });
+  } = useWebRTCCall(callId!, () => {}, username); // Empty callback to prevent toast on call page entry
 
   const toggleChat = () => {
     setIsChatOpen((prev) => !prev);
@@ -47,8 +41,71 @@ export const Call = () => {
     }
   };
 
+  const handleUsernameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tempUsername.trim()) {
+      setUsername(tempUsername.trim());
+      setIsUsernameModalOpen(false);
+      // Show toast after successful username submission
+      toast.success(`Participant ${tempUsername.trim()} joined the call!`, {
+        description: `${new Date().toLocaleTimeString()} - New participant connected`,
+        duration: 5000,
+        style: {
+          background: 'rgba(33, 33, 33, 0.95)',
+          color: 'rgba(255, 255, 255, 0.9)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(4px)',
+        },
+        position: 'top-right',
+      });
+    }
+  };
+
+  // Prevent dialog from closing unless a valid username is submitted
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !username) {
+      return; // Do not allow closing if username is not set
+    }
+    setIsUsernameModalOpen(open);
+  };
+
   const hasNewMessages = false; // Replace with actual logic
 
+  // Render only the dialog until a username is entered
+  if (!username) {
+    return (
+      <Dialog open={isUsernameModalOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="bg-[#252525] text-white border-[rgba(255,255,255,0.1)]">
+          <DialogHeader>
+            <DialogTitle>Enter Your Username</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUsernameSubmit}>
+            <div className="py-4">
+              <Input
+                type="text"
+                value={tempUsername}
+                onChange={(e) => setTempUsername(e.target.value)}
+                placeholder="Your username"
+                className="bg-[#1a1a1a] text-white border-[rgba(255,255,255,0.1)]"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={!tempUsername.trim()}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Join Call
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Main content rendered only after username is set
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-white p-6">
       {/* Video Streams Section */}
@@ -59,7 +116,7 @@ export const Call = () => {
             <div className="relative bg">
               <VideoPlayer stream={localStream} muted={true} className="w-full h-full object-cover" />
               <div className="absolute bottom-2 left-2 bg-[rgba(33,33,33,0.95)] text-[rgba(255,255,255,0.9)] px-2 py-1 rounded-md text-sm backdrop-blur-md">
-                You
+                {username || 'You'}
               </div>
             </div>
           )}
@@ -129,14 +186,14 @@ export const Call = () => {
         </button>
       )}
 
-      {socket && (
+      {socket && username && (
         <PersonalChat
           socket={socket}
           callId={callId!}
           messages={messages}
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
-          username="Hemanth"
+          username={username}
         />
       )}
     </div>
