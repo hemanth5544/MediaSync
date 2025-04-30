@@ -27,7 +27,9 @@ export const Call = () => {
     messages,
     startScreenShare,
     stopScreenShare,
-  } = useWebRTCCall(callId!, () => {}, username); // Empty callback to prevent toast on call page entry
+    leaveCall,
+    participants,
+  } = useWebRTCCall(callId!, () => {}, username);
 
   const toggleChat = () => {
     setIsChatOpen((prev) => !prev);
@@ -46,32 +48,38 @@ export const Call = () => {
     if (tempUsername.trim()) {
       setUsername(tempUsername.trim());
       setIsUsernameModalOpen(false);
-      // Show toast after successful username submission
       toast.success(`Participant ${tempUsername.trim()} joined the call!`, {
         description: `${new Date().toLocaleTimeString()} - New participant connected`,
         duration: 5000,
         style: {
-          background: 'rgba(33, 33, 33, 0.95)',
-          color: 'rgba(255, 255, 255, 0.9)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(4px)',
+          background: "rgba(33, 33, 33, 0.95)",
+          color: "rgba(255, 255, 255, 0.9)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          backdropFilter: "blur(4px)",
         },
-        position: 'top-right',
+        position: "top-right",
       });
     }
   };
 
-  // Prevent dialog from closing unless a valid username is submitted
   const handleOpenChange = (open: boolean) => {
     if (!open && !username) {
-      return; // Do not allow closing if username is not set
+      return;
     }
     setIsUsernameModalOpen(open);
   };
 
   const hasNewMessages = false; // Replace with actual logic
 
-  // Render only the dialog until a username is entered
+  // Calculate dynamic grid columns based on participant count
+  const participantCount = (localStream ? 1 : 0) + Object.keys(remoteStreams).length;
+  const getGridCols = () => {
+    if (participantCount <= 1) return "grid-cols-1";
+    if (participantCount === 2) return "grid-cols-2";
+    if (participantCount <= 4) return "grid-cols-2";
+    return "grid-cols-3";
+  };
+
   if (!username) {
     return (
       <Dialog open={isUsernameModalOpen} onOpenChange={handleOpenChange}>
@@ -105,19 +113,22 @@ export const Call = () => {
     );
   }
 
-  // Main content rendered only after username is set
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-white p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-white p-6 flex flex-col">
       {/* Video Streams Section */}
-      <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex-1 mb-6">
+        <div className={`grid ${getGridCols()} gap-4 auto-rows-fr`}>
           {/* Local Video Stream */}
           {localStream && (
-            <div className="relative bg">
-              <VideoPlayer stream={localStream} muted={true} className="w-full h-full object-cover" />
-              <div className="absolute bottom-2 left-2 bg-[rgba(33,33,33,0.95)] text-[rgba(255,255,255,0.9)] px-2 py-1 rounded-md text-sm backdrop-blur-md">
-                {username || 'You'}
-              </div>
+            <div className="relative aspect-video">
+              <VideoPlayer
+                stream={localStream}
+                muted={true}
+                isLocal={true}
+                participantName={username || "You"}
+                className="w-full h-full object-cover"
+                onLeaveCall={leaveCall} // Pass leaveCall to local VideoPlayer
+              />
             </div>
           )}
 
@@ -125,12 +136,13 @@ export const Call = () => {
           {Object.entries(remoteStreams).map(([socketId, stream]) => (
             <div
               key={socketId}
-              className="relative bg-[#252525] rounded-xl overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-lg"
+              className="relative aspect-video"
             >
-              <VideoPlayer stream={stream} className="w-full h-full object-cover" />
-              <div className="absolute bottom-2 left-2 bg-[rgba(33,33,33,0.95)] text-[rgba(255,255,255,0.9)] px-2 py-1 rounded-md text-sm backdrop-blur-md">
-                Participant
-              </div>
+              <VideoPlayer
+                stream={stream}
+                participantName={participants[socketId] || `Participant ${socketId.slice(0, 4)}`}
+                className="w-full h-full object-cover"
+              />
             </div>
           ))}
         </div>
@@ -138,12 +150,12 @@ export const Call = () => {
 
       {/* Screen Share Section */}
       {(screenShareStream || Object.keys(remoteScreenStreams).length > 0) && (
-        <div>
+        <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4">Screen Shares</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid ${getGridCols()} gap-4 auto-rows-fr`}>
             {/* Local Screen Share */}
             {screenShareStream && (
-              <div className="relative bg">
+              <div className="relative aspect-video">
                 <ScreenSharePlayer stream={screenShareStream} className="w-full h-full" />
               </div>
             )}
@@ -152,7 +164,7 @@ export const Call = () => {
             {Object.entries(remoteScreenStreams).map(([socketId, stream]) => (
               <div
                 key={`screen-${socketId}`}
-                className="relative bg-[#252525] rounded-xl overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-lg"
+                className="relative aspect-video"
               >
                 <ScreenSharePlayer stream={stream} className="w-full h-full" />
               </div>
@@ -163,16 +175,15 @@ export const Call = () => {
 
       {/* Screen Share Button */}
       <button
-      onClick={handleScreenShare}
-      className={`fixed right-20 bottom-6 p-3 rounded-full transition-all shadow-lg z-20 border border-black ${
-        screenShareStream
-          ? 'bg-white text-red-600 hover:bg-red-600 hover:text-white'
-          : 'bg-white text-black hover:bg-black hover:text-white'
-      }`}
-    >
-      <ScreenShare size={24} />
-    </button>
-
+        onClick={handleScreenShare}
+        className={`fixed right-20 bottom-6 p-3 rounded-full transition-all shadow-lg z-20 border border-black ${
+          screenShareStream
+            ? "bg-white text-red-600 hover:bg-red-600 hover:text-white"
+            : "bg-white text-black hover:bg-black hover:text-white"
+        }`}
+      >
+        <ScreenShare size={24} />
+      </button>
 
       {/* Chat Toggle Button */}
       {!isChatOpen && (
