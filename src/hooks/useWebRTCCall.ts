@@ -22,8 +22,9 @@ export const useWebRTCCall = (
   const [socket, setSocket] = useState<Socket | null>(null);
   const [peerConnections, setPeerConnections] = useState<RTCPeerConnectionsMap>({});
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [participants, setParticipants] = useState<{ [socketId: string]: string }>({}); // Store socketId -> username
 
-  // Initialize socket and local media
+  // Initialize socket
   useEffect(() => {
     const newSocket = io(`${apiUrl}`, {
       transports: ['websocket'],
@@ -31,30 +32,31 @@ export const useWebRTCCall = (
     });
     setSocket(newSocket);
 
-    if (username) {
-      newSocket.emit('set-username', username);
-    }
-
-    // Attempt to get user media, but proceed even if it fails
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((stream) => {
-        setLocalStream(stream);
-        newSocket.emit('join-call', callId);
-      })
-      .catch((error) => {
-        console.error('Failed to get user media:', error);
-        // Still join the call even without local stream
-        setLocalStream(null);
-        newSocket.emit('join-call', callId);
-      });
-
     return () => {
       newSocket.close();
       localStream?.getTracks().forEach((track) => track.stop());
       screenShareStream?.getTracks().forEach((track) => track.stop());
     };
-  }, [callId, username]);
+  }, []);
+
+  // Get user media and join call only when username is provided
+  useEffect(() => {
+    if (!username || !socket) return;
+
+    socket.emit('set-username', username);
+
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        setLocalStream(stream);
+        socket.emit('join-call', callId);
+      })
+      .catch((error) => {
+        console.error('Failed to get user media:', error);
+        setLocalStream(null);
+        socket.emit('join-call', callId);
+      });
+  }, [username, socket, callId]);
 
   // Start screen sharing
   const startScreenShare = async () => {
@@ -119,11 +121,44 @@ export const useWebRTCCall = (
     }
   };
 
-  // WebRTC signaling
+  // Leave call
+  const leaveCall = () => {
+    // Stop local stream
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+    }
+
+    // Stop screen share stream
+    if (screenShareStream) {
+      screenShareStream.getTracks().forEach((track) => track.stop());
+      setScreenShareStream(null);
+      socket?.emit('stop-screen-share', callId);
+    }
+
+    // Close all peer connections
+    Object.values(peerConnections).forEach((pc) => {
+      pc.close();
+    });
+    setPeerConnections({});
+    setRemoteStreams({});
+    setRemoteScreenStreams({});
+    setParticipants({});
+    setMessages([]);
+
+    // Disconnect socket
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+  };
+
+  // WebRTC signaling and participant handling
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('new-socket', (socketId: string) => {
+    socket.on('new-socket', (socketId: string, username: string) => {
+      setParticipants((prev) => ({ ...prev, [socketId]: username }));
       const pc = new RTCPeerConnection(configuration);
 
       if (localStream) {
@@ -181,6 +216,36 @@ export const useWebRTCCall = (
         ...prev,
         [socketId]: pc,
       }));
+    });
+
+    socket.on('participants', (participants: [string, string][]) => {
+      setParticipants(Object.fromEntries(participants));
+    });
+
+    socket.on('participant-left', (socketId: string) => {
+      setParticipants((prev) => {
+        const newParticipants = { ...prev };
+        delete newParticipants[socketId];
+        return newParticipants;
+      });
+      setRemoteStreams((prev) => {
+        const newStreams = { ...prev };
+        delete newStreams[socketId];
+        return newStreams;
+      });
+      setRemoteScreenStreams((prev) => {
+        const newStreams = { ...prev };
+        delete newStreams[socketId];
+        return newStreams;
+      });
+      setPeerConnections((prev) => {
+        const newConnections = { ...prev };
+        if (newConnections[socketId]) {
+          newConnections[socketId].close();
+          delete newConnections[socketId];
+        }
+        return newConnections;
+      });
     });
 
     socket.on('recive-offer', async (data: { from: string; offer: RTCSessionDescription }) => {
@@ -275,6 +340,8 @@ export const useWebRTCCall = (
 
     return () => {
       socket.off('new-socket');
+      socket.off('participants');
+      socket.off('participant-left');
       socket.off('recive-offer');
       socket.off('recive-answer');
       socket.off('recive-icecandidate');
@@ -293,5 +360,7 @@ export const useWebRTCCall = (
     messages,
     startScreenShare,
     stopScreenShare,
+    leaveCall,
+    participants,
   };
 };
