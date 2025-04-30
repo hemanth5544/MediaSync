@@ -1,11 +1,14 @@
 export interface RTCPeerConnectionsMap {
-  [key: string]: RTCPeerConnection;
+  [socketId: string]: RTCPeerConnection;
 }
 
 export interface ChatMessage {
+from: string;
   message: string;
-  from: string;
+  username?: string;
+  createdAt?: string;
 }
+
 
 export interface StreamProps {
   streamId: string;
