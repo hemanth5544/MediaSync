@@ -28,11 +28,33 @@ export const useWebRTCCall = (
   // Initialize socket
   useEffect(() => {
     const newSocket = io(`${apiUrl}`, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'], // Prioritize polling
+      reconnection: true,
       reconnectionAttempts: 5,
-    });
+      reconnectionDelay: 1000,
+  });
     setSocket(newSocket);
 
+
+    // Log all Socket.IO events
+    newSocket.on('connect', () => {
+      console.log('Socket.IO connected:', newSocket.id, 'Transport:', newSocket.io.engine.transport.name);
+  });
+  newSocket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error.message, error);
+  });
+  newSocket.on('disconnect', (reason) => {
+      console.log('Socket.IO disconnected:', reason);
+  });
+  newSocket.io.engine.on('upgrade', () => {
+      console.log('Socket.IO upgraded transport to:', newSocket.io.engine.transport.name);
+  });
+  newSocket.io.engine.on('packet', (packet) => {
+      console.log('Socket.IO packet:', packet);
+  });
+  newSocket.io.engine.on('error', (error) => {
+      console.error('Socket.IO engine error:', error);
+  });
     return () => {
       newSocket.close();
       localStream?.getTracks().forEach((track) => track.stop());

@@ -8,12 +8,24 @@ const app = express();
 
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
     cors: {
         origin: "*",  
         methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
-    }
+    },
+    transports: ['polling', 'websocket'], // Explicitly allow both transports
+    allowEIO3: true, // Support older Socket.IO clients if needed
+});
+
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url} from ${req.headers.origin || 'unknown'}`);
+  next();
+});
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
 });
 
 // Store usernames and rooms
