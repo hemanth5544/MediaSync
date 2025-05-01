@@ -28,8 +28,8 @@ export const useWebRTCCall = (
   // Initialize socket
   useEffect(() => {
     const newSocket = io(`${apiUrl}`, {
-      transports: ['websocket'],
-      upgrade: false,
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
     });
     setSocket(newSocket);
 
