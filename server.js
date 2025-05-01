@@ -11,7 +11,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "https://mediasync.onrender.com",  
+        origin: "https://mediasync-production.up.railway.app",  
         methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
     }
 });
