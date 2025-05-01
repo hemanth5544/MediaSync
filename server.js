@@ -11,7 +11,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "https://mediasync-production.up.railway.app",  
+        origin: "*",  
         methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"]
     }
 });
@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join-call', (call_id) => {
+    console.log(`Socket ${socket.id} joining call ${call_id}`);
     socket.join(call_id);
 
     // Initialize room if it doesn't exist
@@ -135,4 +136,5 @@ app.get('/stream/:stream_id', (req, res) => {
   res.render('stream', data);
 });
 
-server.listen(2000, () => console.log('Server running on port 2000'));
+const port = process.env.PORT || 2000;
+server.listen(port, () => console.log(`Server running on port ${port}`));

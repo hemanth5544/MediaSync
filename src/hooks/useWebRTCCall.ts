@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { ChatMessage, RTCPeerConnectionsMap } from '../types';
 
 const apiUrl = import.meta.env.VITE_APP_URL;
+console.log('API URL:', apiUrl); // Add this to verify
 const configuration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
