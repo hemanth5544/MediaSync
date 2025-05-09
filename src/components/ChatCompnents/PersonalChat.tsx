@@ -49,7 +49,11 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
     const fallbackInitials = displayName.slice(0, 2).toUpperCase();
 
     return (
-      <div className={`flex mt-2 ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`flex mt-2 ${
+          isOwnMessage ? "justify-end" : "justify-start"
+        }`}
+      >
         <div
           className={cn("max-w-[75%] w-fit flex flex-col gap-1", {
             "items-end": isOwnMessage,
@@ -62,7 +66,12 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
           >
             {showAvatar && (
               <Avatar className="w-6 h-6">
-                <AvatarFallback>{fallbackInitials}</AvatarFallback>
+                <AvatarFallback
+                  style={{ backgroundColor: "white" }}
+                  className="text-black text-xs "
+                >
+                  {fallbackInitials}
+                </AvatarFallback>{" "}
               </Avatar>
             )}
             <span className="font-medium text-white">{displayName}</span>
@@ -70,7 +79,9 @@ export const PersonalChat = ({ socket, messages, callId, isOpen, onClose, userna
           <div
             className={cn(
               "py-2 px-3 rounded-xl text-sm w-fit",
-              isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+              isOwnMessage
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"
             )}
           >
             {message.message}

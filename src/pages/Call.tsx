@@ -1,6 +1,6 @@
 // src/pages/Call.tsx
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams,useNavigate } from 'react-router-dom';
 import { VideoPlayer } from '../components/Players/VideoPlayer';
 import { ScreenSharePlayer } from '../components/Players/ScreenSharePlayer';
 import { useWebRTCCall } from '../hooks/useWebRTCCall';
@@ -17,6 +17,7 @@ export const Call = () => {
   const [username, setUsername] = useState('');
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(true);
   const [tempUsername, setTempUsername] = useState('');
+  const navigate = useNavigate();
 
   const {
     localStream,
@@ -79,7 +80,10 @@ export const Call = () => {
     if (participantCount <= 4) return "grid-cols-2";
     return "grid-cols-3";
   };
-
+  const handleLeaveCall = () => {
+    leaveCall(); 
+    navigate('/leave');
+  };
   if (!username) {
     return (
       <Dialog open={isUsernameModalOpen} onOpenChange={handleOpenChange}>
@@ -127,7 +131,7 @@ export const Call = () => {
                 isLocal={true}
                 participantName={username || "You"}
                 className="w-full h-full object-cover"
-                onLeaveCall={leaveCall} // Pass leaveCall to local VideoPlayer
+                onLeaveCall={handleLeaveCall}
               />
             </div>
           )}
