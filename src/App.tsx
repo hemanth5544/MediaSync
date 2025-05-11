@@ -7,11 +7,15 @@ import {RouterProgress} from './components/utils/RouterProgress'
 import { Toaster } from "./components/ui/sonner"
 import { Ripple } from './components/magicui/ripple'
 
-
+import { useEffect } from 'react';
 
 
 
 function App() {
+  useEffect(() => {
+    // Add 'dark' class to <html> on mount
+    document.documentElement.classList.add('dark');
+  }, []);
   return (
     <Router>
       <RouterProgress />
