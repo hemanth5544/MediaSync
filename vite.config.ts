@@ -9,6 +9,8 @@ export default defineConfig({
   },
   server: {
     host: true,  // Exposes the server to the network
-    allowedHosts: ['all'],  // Allows all hosts
+    allowedHosts: [
+      'mediasync-production.up.railway.app', // Add the external host here
+    ],
   },
 });
